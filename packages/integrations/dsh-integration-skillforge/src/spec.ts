@@ -13,6 +13,7 @@ import { defineDomain, domainTable } from '@deepseek-ai/dsh-storage-domain'
 const jsonObject = z.record(z.string(), z.unknown())
 
 /** One tool call inside a stored trajectory. */
+/** 某一轮对话中的一次工具调用 */
 export const turnCallRecord = z.object({
   toolName: z.string(),
   parameters: jsonObject,
@@ -26,6 +27,7 @@ export const turnCallRecord = z.object({
 export type TurnCallRecord = z.infer<typeof turnCallRecord>
 
 /** One DSH turn stored as a trajectory (mining input). */
+/** 轨迹记录 */
 export const trajectoryRecord = z.object({
   sessionId: z.string(),
   turn: z.number(),
@@ -41,6 +43,7 @@ export const trajectoryRecord = z.object({
 export type TrajectoryRecord = z.infer<typeof trajectoryRecord>
 
 /** One classified failure sample (distiller input). */
+/** 一次失败的用例 */
 export const failureRecord = z.object({
   id: z.string(),
   toolName: z.string(),
@@ -54,6 +57,7 @@ export const failureRecord = z.object({
 export type FailureRecord = z.infer<typeof failureRecord>
 
 /** One distilled validation rule (guard input). */
+/** 规则记录 */
 export const ruleRecord = z.object({
   name: z.string(),
   toolName: z.string(),
@@ -70,6 +74,7 @@ export const ruleRecord = z.object({
 export type RuleRecord = z.infer<typeof ruleRecord>
 
 /** One mined skill package. */
+/** 一次挖掘的skill信息 */
 export const skillRecord = z.object({
   name: z.string(),
   scenario: z.string(),
@@ -91,6 +96,7 @@ export const skillRecord = z.object({
 export type SkillRecord = z.infer<typeof skillRecord>
 
 /** One failed postcondition verification (silent-failure record). */
+/** 一次失败的后置校验 */
 export const verificationRecord = z.object({
   id: z.string(),
   sessionId: z.string(),
@@ -103,6 +109,7 @@ export const verificationRecord = z.object({
 })
 export type VerificationRecord = z.infer<typeof verificationRecord>
 
+/** 注入记录 */
 export const injectionRecord = z.object({
   /** Best-effort attribution from the most recent session event; absent
    *  when the prompt was assembled outside any observed session. */
@@ -112,6 +119,7 @@ export const injectionRecord = z.object({
 })
 export type InjectionRecord = z.infer<typeof injectionRecord>
 
+/** Skill版本记录 */
 export const skillRevisionsRecord = z.object({
   id: z.string(),
   skillName: z.string(),
@@ -126,6 +134,7 @@ export type SkillRevisionRecord = z.infer<typeof skillRevisionsRecord>
  * The skillforge domain: four tables (trajectories, failures, rules,
  * skills), no global slot.
  */
+/** 定义一个数据域 */
 export const skillforgeDomainSpec = defineDomain({
   name: 'skillforge',
   version: 1,

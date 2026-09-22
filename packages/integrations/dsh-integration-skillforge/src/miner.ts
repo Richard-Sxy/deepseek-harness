@@ -9,6 +9,7 @@ import { SkillStatus } from './types.js'
 import type { SkillRecord, TrajectoryRecord, TurnCallRecord } from './spec.js'
 import { buildTemplate } from './profiler.js'
 
+/** minPathLength/maxPathLength 存储的内容，minSupport 表示最低频率要求的内容 */
 export interface MiningOptions {
   minSupport: number
   minPathLength: number
@@ -47,6 +48,7 @@ function contiguousWindows(
 
 const RISK_WORDS = ['update', 'delete', 'send', 'transfer', 'write', 'edit']
 
+/** DAG accumulator */
 interface DagAccumulator {
   scenario: string
   path: string[]
@@ -60,10 +62,12 @@ interface DagAccumulator {
  * Mine skills from stored trajectories. Only successful call chains
  * participate; a path is frequent when its support reaches `minSupport`.
  */
+/** 核心函数 */
 export function mineSkills(
   trajectories: TrajectoryRecord[],
   options: MiningOptions,
 ): SkillRecord[] {
+  // 有机会晋升的 skill 内容
   const eligible = trajectories.filter(traj =>
     (options.scenario === undefined || traj.scenario === options.scenario)
     // G1 gate: turns whose postconditions failed are stored for audit but
@@ -72,6 +76,7 @@ export function mineSkills(
   )
   const totalEligible = Math.max(1, eligible.length)
 
+  // DAG 生成的签名
   const bySignature = new Map<string, DagAccumulator>()
   for (const trajectory of eligible) {
     const successful = trajectory.calls.filter(call => call.success)
@@ -98,6 +103,7 @@ export function mineSkills(
     }
   }
 
+  // skill 生成 skill 候选
   const skills: SkillRecord[] = []
   const sorted = [...bySignature.values()].sort((a, b) => b.support - a.support)
   for (const acc of sorted) {
@@ -116,6 +122,7 @@ export function mineSkills(
     // DSH sessions carry no per-call token accounting; the field stays 0.
     const avgTokenCost = 0
 
+    // 记录 nodeCalls 
     const defaults: Record<string, unknown> = {}
     for (const [index, toolName] of acc.path.entries()) {
       const nodeCalls = acc.windows

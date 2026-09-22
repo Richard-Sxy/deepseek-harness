@@ -1,0 +1,10 @@
+# Load SkillForge directly from this source checkout. The headless profile already
+# provides storageDomain, systemPrompt, and tools.
+- insert:
+    - id: integration-skillforge
+      name: '../src/index.ts'
+      config:
+        projectName: 'skillforge-demo'
+        minSupport: 2
+        minSessionsForInjection: 2
+        minMiningIntervalMs: 0

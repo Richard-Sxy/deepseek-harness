@@ -258,50 +258,50 @@ export class SkillForgeService extends Service {
     try {
       if (!existsSync(this.mirrorPath)) return
       const lines = readFileSync(this.mirrorPath, 'utf8').split('\n')
-      let replayed = 0
-      for (const line of lines) {
-        const trimmed = line.trim()
-        if (trimmed.length === 0) continue
-        try {
-          const entry = JSON.parse(trimmed) as {
-            scenario?: string
-            ts?: number
-            record?: TurnRecord
-            verificationFailures?: VerificationFailure[]
-            type?: string
-            skill?: SkillRecord
-            revision?: SkillRevisionRecord
-          }
-          if (entry.type === 'skill' && entry.skill?.name !== undefined && skillsTable !== undefined) {
-            void skillsTable.put(entry.skill.name, entry.skill)
-            continue
-          }
-          if (entry.type === 'revision' && entry.revision?.id !== undefined && revisionsTable !== undefined) {
-            void revisionsTable.put(entry.revision.id, entry.revision)
-            continue
-          }
-          const record = entry.record
-          if (!record?.sessionId || !Array.isArray(record.calls)) continue
-          const trajectory: TrajectoryRecord = {
-            sessionId: record.sessionId,
-            turn: record.turn,
-            scenario: entry.scenario ?? this.config.projectName,
-            goal: record.goal ?? '',
-            plannerTrace: record.plannerTrace ?? [],
-            calls: record.calls,
-            createdAt: entry.ts ?? Date.now(),
-            verificationFailures: entry.verificationFailures?.length ?? 0,
-          }
-          void table.put(`${record.sessionId}:turn${record.turn}`, trajectory)
-          replayed += 1
-        } catch {
-        // Malformed mirror line: replay is best-effort.
+    let replayed = 0
+    for (const line of lines) {
+      const trimmed = line.trim()
+      if (trimmed.length === 0) continue
+      try {
+        const entry = JSON.parse(trimmed) as {
+          scenario?: string
+          ts?: number
+          record?: TurnRecord
+          verificationFailures?: VerificationFailure[]
+          type?: string
+          skill?: SkillRecord
+          revision?: SkillRevisionRecord
         }
+        if (entry.type === 'skill' && entry.skill?.name !== undefined && skillsTable !== undefined) {
+          void skillsTable.put(entry.skill.name, entry.skill)
+          continue
+        }
+        if (entry.type === 'revision' && entry.revision?.id !== undefined && revisionsTable !== undefined) {
+          void revisionsTable.put(entry.revision.id, entry.revision)
+          continue
+        }
+        const record = entry.record
+        if (!record?.sessionId || !Array.isArray(record.calls)) continue
+        const trajectory: TrajectoryRecord = {
+          sessionId: record.sessionId,
+          turn: record.turn,
+          scenario: entry.scenario ?? this.config.projectName,
+          goal: record.goal ?? '',
+          plannerTrace: record.plannerTrace ?? [],
+          calls: record.calls,
+          createdAt: entry.ts ?? Date.now(),
+          verificationFailures: entry.verificationFailures?.length ?? 0,
+        }
+        void table.put(`${record.sessionId}:turn${record.turn}`, trajectory)
+        replayed += 1
+      } catch {
+        // Malformed mirror line: replay is best-effort.
       }
-      if (replayed > 0) {
-        this.templatesDirty = true
-        this.ctx.logger.info('[skillforge] mirror replayed %d turns into trajectories', replayed)
-      }
+    }
+    if (replayed > 0) {
+      this.templatesDirty = true
+      this.ctx.logger.info('[skillforge] mirror replayed %d turns into trajectories', replayed)
+    }
     } catch (error) {
       this.ctx.logger.warn('skillforge: mirror replay failed: %o', error)
     }
@@ -586,26 +586,26 @@ export class SkillForgeService extends Service {
 
       if (missingSchema.length > 0) {
         this.ctx.logger.warn(
-          'skillforge: blocked %s (missing schema-required parameters: %s)',
+          'skillforge: blocked %s (missing or empty schema-required parameters: %s)',
           exec.name, missingSchema.join(', '),
         )
         return {
           kind: 'deny',
-          reason: `SkillForge precheck: ${exec.name} is missing required parameter(s) ${missingSchema.join(', ')} declared by its tool schema. Repair hint: validate required fields before retrying.`,
+          reason: `SkillForge precheck: ${exec.name} is missing (or passed empty) required parameter(s) ${missingSchema.join(', ')} declared by its tool schema. Repair hint: provide a non-empty value before retrying.`,
         }
       }
       if (missingLearned.length > 0) {
         this.ctx.logger.warn(
-          'skillforge: blocked %s (missing empirically-required parameters: %s)',
+          'skillforge: blocked %s (missing or empty empirically-required parameters: %s)',
           exec.name, missingLearned.join(', '),
         )
         return {
           kind: 'deny',
-          reason: `SkillForge precheck: ${exec.name} is missing parameter(s) ${missingLearned.join(', ')} present in all ${sampleCount} successful calls. Repair hint: validate required fields before retrying.`,
+          reason: `SkillForge precheck: ${exec.name} is missing (or passed empty) parameter(s) ${missingLearned.join(', ')} present in all ${sampleCount} successful calls. Repair hint: provide a non-empty value before retrying.`,
         }
       }
       if (enumKeys.length > 0) {
-        const detail = enumKeys.map((key) => {
+        const detail = enumKeys.map(key => {
           const spec = schema.properties[key]
           return `${key} must be one of [${(spec?.enum ?? []).map(value => JSON.stringify(value)).join(', ')}]`
         }).join('; ')
@@ -728,16 +728,14 @@ export class SkillForgeService extends Service {
 
   // ---- 5. prompt section: surface usable skills -----------------------------
 
-  // Prompt注入
   private registerPromptSection(): void {
     this.ctx.systemPrompt.section({
       name: 'skillforge:skills',
       order: 550,
-      text: context => this.skillsSectionText(context),
+      text: (context) => this.skillsSectionText(context),
     })
   }
 
-  // 系统提示词注入位置
   private skillsSectionText(context?: AssembleContext): string {
     const table = this.skills
     if (!table || table.size === 0) return ''

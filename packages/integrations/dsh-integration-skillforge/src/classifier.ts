@@ -8,10 +8,19 @@
 
 import { FailureType, type ClassificationResult, type FailureInput } from './types.js'
 
-const PERMISSION_KEYWORDS = ['permission', 'forbidden', 'unauthorized', 'access denied', 'not permitted', '权限', '401', '403']
+const PERMISSION_KEYWORDS = ['permission', 'forbidden', 'unauthorized', 'access denied', 'not permitted', '权限', '401', '403',
+  // Sandbox / policy-wall vocabulary (T6R): these errors carry no signal in
+  // the parameter chain, so without their own keywords they fell through to
+  // the context fallback and were hijacked into parameter_error by planner
+  // noise. The permission chain runs first, so they short-circuit here.
+  'sandbox', 'escalation']
 // No bare 'missing': it hijacks dependency errors ("missing_lib", "No module
 // named 'missing_...'") into parameter_error. Compound forms only.
-const PARAMETER_KEYWORDS = ['missing required', 'missing parameter', 'missing argument', 'missing field', 'invalid', 'required', 'schema', 'must differ', '参数', '字段', '类型', 'jsondecodeerror', 'syntaxerror', 'expecting property']
+const PARAMETER_KEYWORDS = ['missing required', 'missing parameter', 'missing argument', 'missing field', 'invalid', 'required', 'schema', 'must differ', '参数', '字段', '类型', 'jsondecodeerror', 'syntaxerror', 'expecting property',
+  // Empty-string value validation ("url must be a non-empty string"): the
+  // key is present but the value is invalid — a parameter problem, not
+  // unknown (T6R: previously landed in unknown).
+  'non-empty']
 const SCENE_KEYWORDS = ['scene', 'unsupported', 'mismatch', '场景', '不适用']
 const DEPENDENCY_KEYWORDS = ['dependency', 'not installed', 'module', '依赖', 'no matching distribution', 'could not find a version', 'no module named', 'enoent']
 const RATE_LIMIT_KEYWORDS = ['rate limit', '429', '限流']
@@ -97,11 +106,13 @@ export function classifyFailure(input: FailureInput): ClassificationResult {
 /**
  * Structural parameter check on the tool arguments: missing required keys.
  * The caller derives `required` from the parameter profiler (keys present in
- * every successful call of the tool).
+ * every successful call of the tool). An empty-string value counts as
+ * missing: successful calls never carried it (T3 — `url: ""` slipped past
+ * the absence check and died in the tool's own validation instead).
  */
 export function missingRequiredParameters(
   parameters: Record<string, unknown>,
   required: readonly string[],
 ): string[] {
-  return required.filter(key => !(key in parameters))
+  return required.filter((key) => !(key in parameters) || parameters[key] === '')
 }

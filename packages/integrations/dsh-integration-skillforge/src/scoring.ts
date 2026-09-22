@@ -8,6 +8,7 @@
 import { SkillStatus } from './types.js'
 import type { SkillRecord } from './spec.js'
 
+/** Credit Policy 表示不同部分打分的权重 */
 export interface CreditPolicy {
   successWeight: number
   latencyWeight: number
@@ -54,6 +55,7 @@ export interface ScoreResult {
   reasons: string[]
 }
 
+/** 构建一个 Skill 状态：已下线，降级，候选，灰度测试，激活 */
 const STATUS_ORDER: Record<SkillStatus, number> = {
   [SkillStatus.OFFLINE]: 0,
   [SkillStatus.DEGRADED]: 1,

@@ -88,9 +88,12 @@ function buildCondition(failure: FailureRecord): Record<string, unknown> {
  * (tool, scenario, failureType, fingerprint); each group becomes one rule
  * whose confidence grows with its evidence count.
  */
+/** 核心函数：输入失败规则记录，输出规则记录 */
 export function distillRules(failures: FailureRecord[]): RuleRecord[] {
+  // 构建失败记录：Map<string, {key{toolName, scenario, failureType}, failure}>
   const groups = new Map<string, { key: { toolName: string; scenario: string; failureType: string }; failures: FailureRecord[] }>()
   for (const failure of failures) {
+    // 失败生成唯一指纹
     const fingerprint = conditionFingerprint(buildCondition(failure))
     const groupKey = [failure.toolName, failure.scenario, failure.failureType, fingerprint].join('::')
     let group = groups.get(groupKey)

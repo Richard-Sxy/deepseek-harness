@@ -135,23 +135,24 @@ export class ToolResultPruner extends Service {
    */
   pruneSession(session: Session): PruneResult {
     const candidates: SnapshotCandidate[] = []
+    // 每一个 surface 节点
     for (const seq of [...session.surface.nodes]) {
       // oxlint-disable-next-line typescript/no-deprecated -- Existing Session history read; migration deferred.
-      const event = session.eventAt(seq)
+      const event = session.eventAt(seq) // 从 key 反向获取 value 的值
       /* v8 ignore next -- surface seqs are validated contiguous log references. */
-      if (event?.type === 'tool/result') candidates.push({ seq, event })
+      if (event?.type === 'tool/result') candidates.push({ seq, event }) // list 中存入 { seq, 'tool/result' } 的结果
     }
-
+    /** 这边是尝试进行逐个裁切 */
     const pruned: PrunedEntry[] = []
     let charsRemoved = 0
     for (const { seq, event } of candidates) {
-      const original = session.deriveEventMessage(event) as ToolResultMessage
-      const result = original.content[0]
-      const content = this.pruneContent(result.content)
-      if (content === null) continue
-      const charsBefore = this.measureContent(result.content)
+      const original = session.deriveEventMessage(event) as ToolResultMessage  // 把 event 投影成消息对象
+      const result = original.content[0]  // 取出内容快
+      const content = this.pruneContent(result.content)  // 取出工具调用的返回结果
+      if (content === null) continue      // 如果内容快不存在 那么就返回
+      const charsBefore = this.measureContent(result.content) // 估算裁切前后的字符数(这边只是做了字符数的估算)
       const charsAfter = this.measureContent(content)
-      const message = freezeMessage<ToolResultMessage>({
+      const message = freezeMessage<ToolResultMessage>({   // 冻结消息，之后不能修改
         ...original,
         content: [{
           ...result,
@@ -161,7 +162,7 @@ export class ToolResultPruner extends Service {
       // Shadow-price protocol: the metering event and its replacement are
       // appended synchronously adjacent, so pure consumers subtract the
       // shadowed node's heuristic price without retaining per-node state.
-      session.append('compaction/prune', {
+      session.append('compaction/prune', {  // 追加一个 compaction/prune 事件，用于记录被替换的有多少
         shadowedRange: { start: seq, end: seq },
         shadowedSeqs: [seq],
         shadowedTokenCount: this.ctx.tokenMeter.estimateMessage(original),

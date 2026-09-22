@@ -51,6 +51,7 @@ export function recoveryAction(
 }
 
 /** One-line guidance for the model after a failed call. */
+/** 失败恢复指南，用 string 插入到 SystemPrompt 当中去 */
 export function recoveryGuidance(
   failureType: FailureType,
   action: RepairAction,

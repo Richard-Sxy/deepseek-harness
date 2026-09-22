@@ -8,6 +8,7 @@ import { createCallable, joinPrototype, symbols, type Tracker } from './utils.ts
  * Subclasses call `super(ctx, name)` from their constructor. The service is
  * registered immediately and is automatically removed with the owning fiber.
  */
+/** 这个是抽象基类，定义了服务如何注册、如何被ctx提供、如何合并配置、如何处理隔离和代理，是所有服务的父类 */
 export abstract class Service<out T = never> {
   /** Symbol key of an instance method run after construction (class plugins). */
   static readonly init: unique symbol = symbols.init

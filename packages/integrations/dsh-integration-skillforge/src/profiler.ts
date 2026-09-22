@@ -10,6 +10,7 @@
 
 import type { TurnCall } from './types.js'
 
+/** parameter constraint */
 export interface ParameterConstraint {
   parameterName: string
   valueType: 'number' | 'boolean' | 'category' | 'array' | 'object' | 'mixed'
@@ -26,6 +27,7 @@ export interface ParameterConstraint {
   evidence?: { method: 'kde' | 'median' }
 }
 
+/** Tool parameters template. */
 export interface ToolParameterTemplate {
   toolName: string
   scenario: string
@@ -84,6 +86,7 @@ function kdeMode(values: number[]): number {
   return best
 }
 
+/** 数值约束 */
 function numericConstraint(
   key: string,
   values: number[],
@@ -118,6 +121,7 @@ function numericConstraint(
   }
 }
 
+/** 类型约束 */
 function categoricalConstraint(
   key: string,
   values: unknown[],

@@ -9,10 +9,9 @@
   ],
   "references": [
     { "path": "../../../vendor/cordis" },
+    { "path": "../../util/brand" },
     { "path": "../../core/agent" },
-    { "path": "../../llm/llm" },
     { "path": "../../core/session" },
-    { "path": "../../core/tools" },
     { "path": "../../core/system-prompt" },
     { "path": "../../storage/storage-domain" }
   ]

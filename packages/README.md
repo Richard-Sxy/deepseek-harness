@@ -65,6 +65,7 @@ Every package lives in exactly one group; new packages join existing groups, and
 | [`guard/`](guard/README.md) | Loop-hygiene guards: advisory repeat-call reminders + the `tools/execute` deadline enforcer |
 | [`bundle/`](bundle/README.md) | Installable `dsh --profile` patch layers |
 | [`extensions/`](extensions/README.md) | Agent runtime self-modification: live plugin/service inspection and model-written mount/unmount |
+| [`integrations/`](integrations/README.md) | Optional plugins that compose existing services into higher-level behavior |
 | [`mcp/`](mcp/README.md) | External Model Context Protocol servers exposed as native tools |
 | [`hooks/`](hooks/README.md) | Hook bridges + the shared Claude Code / Codex wire-protocol library |
 | [`session/`](session/README.md) | Durable session data plane: persistence seam + backends, projection seam, log-backed titles, session reporting |

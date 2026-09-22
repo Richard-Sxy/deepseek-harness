@@ -45,10 +45,10 @@ export function estimateContent(blocks: readonly ContentBlock[]): number {
     switch (block.type) {
       case 'text':
       case 'reasoning':
-        tokens += Math.ceil(block.text.length / CHARS_PER_TOKEN) + BLOCK_OVERHEAD
+        tokens += Math.ceil(block.text.length / CHARS_PER_TOKEN) + BLOCK_OVERHEAD // 除以4表示大致的四个字符对应1个token，但是还要加上结构性开销+5
         break
       case 'tool-call':
-        tokens += Math.ceil(block.name.length / CHARS_PER_TOKEN)
+        tokens += Math.ceil(block.name.length / CHARS_PER_TOKEN)  // ceil 表示块向上取整
           + Math.ceil(block.arguments.length / CHARS_PER_TOKEN)
           + BLOCK_OVERHEAD
         break

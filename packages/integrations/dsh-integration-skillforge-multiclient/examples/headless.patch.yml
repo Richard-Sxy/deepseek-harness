@@ -1,0 +1,20 @@
+# Keep the evaluated SkillForge core unchanged and delegate shared-path prompt
+# injection to the multi-client companion. The headless profile already provides
+# storageDomain, systemPrompt, and tools.
+- insert:
+    - id: integration-skillforge
+      name: '../../dsh-integration-skillforge/src/index.ts'
+      config:
+        projectName: 'skillforge-multiclient-demo'
+        skillInjection: false
+        minMiningIntervalMs: 0
+    - id: integration-skillforge-multiclient
+      name: '../src/index.ts'
+      config:
+        defaultScope: 'demo-team'
+        unboundSessionPolicy: 'session-client'
+        minClients: 2
+        minSessions: 2
+        minSupport: 2
+        minPathLength: 2
+        maxPathLength: 5

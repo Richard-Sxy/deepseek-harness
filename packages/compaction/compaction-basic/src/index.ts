@@ -252,6 +252,7 @@ export class BasicCompactionEngine extends CompactionEngine {
    * @param signal - live turn cancellation signal forwarded to summarization.
    * @returns the latest summary compaction result, or `null` when no summary ran.
    */
+  /** 这边是是否需要压缩上下文的判断点 */
   override async compactIfNeeded(
     agent: Agent,
     trigger: CompactionTrigger,
@@ -277,10 +278,12 @@ export class BasicCompactionEngine extends CompactionEngine {
     // capacity and checks its target-specific threshold.
     const prune = this.ctx.get('toolResultPruner')
 
+    // 溢出路径，这边是溢出路径的思路
     if (trigger === 'context-overflow') {
       if (prune !== undefined) {
+        // 硬编码裁切
         prune.pruneSession(agent.session)
-        measurement = meter.measure(agent.session)
+        measurement = meter.measure(agent.session)  // 重新测量
       }
       const range = selectCompactableRange(agent.session, measurement, 0)
       if (range === null) return null
@@ -309,7 +312,7 @@ export class BasicCompactionEngine extends CompactionEngine {
     if (measurement.totalTokens < spec.thresholdTokens) return null
 
     let result: CompactionResult | null = null
-    for (let attempt = 0; attempt <= spec.compactionRetries; attempt += 1) {
+    for (let attempt = 0; attempt <= spec.compactionRetries; attempt += 1) {  // 这边压缩重试有一个循环的
       const range = selectCompactableRange(agent.session, measurement, spec.retainTokens)
       if (range === null) {
         /* v8 ignore else -- concrete replacement preserves a compactable checkpoint; subclass hooks cannot mutate it. */

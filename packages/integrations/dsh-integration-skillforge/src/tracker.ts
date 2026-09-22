@@ -137,7 +137,7 @@ class SessionTracker {
       calls: acc.completedCalls,
     }
   }
-
+  
   private ensureTurn(turn: number): TurnAccumulator {
     let acc = this.turns.get(turn)
     if (!acc) {
