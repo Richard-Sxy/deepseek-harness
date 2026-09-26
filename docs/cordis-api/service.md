@@ -5,11 +5,9 @@
 
 The base class for context services. A subclass loaded as a plugin registers itself as `ctx.<name>`.
 
-Base class for services that expose a named API on `ctx`.
+这个是抽象基类，定义了服务如何注册、如何被ctx提供、如何合并配置、如何处理隔离和代理，是所有服务的父类
 
-Subclasses call `super(ctx, name)` from their constructor. The service is registered immediately and is automatically removed with the owning fiber.
-
-[Source](../../vendor/cordis/src/service.ts#L11)
+[Source](../../vendor/cordis/src/service.ts#L12)
 
 ### service.name
 
@@ -20,7 +18,7 @@ public name!: string
 
 The service name this instance is registered under.
 
-[Source](../../vendor/cordis/src/service.ts#L30)
+[Source](../../vendor/cordis/src/service.ts#L31)
 
 ## Static members
 
@@ -33,7 +31,7 @@ static readonly init: unique symbol
 
 Symbol key of an instance method run after construction (class plugins).
 
-[Source](../../vendor/cordis/src/service.ts#L13)
+[Source](../../vendor/cordis/src/service.ts#L14)
 
 ### Service.check
 
@@ -44,7 +42,7 @@ static readonly check: unique symbol
 
 Symbol key of the availability predicate passed to `ctx.provide()`.
 
-[Source](../../vendor/cordis/src/service.ts#L15)
+[Source](../../vendor/cordis/src/service.ts#L16)
 
 ### Service.config
 
@@ -55,7 +53,7 @@ static readonly config: unique symbol
 
 Symbol key of the phantom intercept-config type parameter.
 
-[Source](../../vendor/cordis/src/service.ts#L17)
+[Source](../../vendor/cordis/src/service.ts#L18)
 
 ### Service.invoke
 
@@ -66,7 +64,7 @@ static readonly invoke: unique symbol
 
 Symbol key of the call body making a service callable (e.g. `ctx.logger()`).
 
-[Source](../../vendor/cordis/src/service.ts#L19)
+[Source](../../vendor/cordis/src/service.ts#L20)
 
 ### Service.extend
 
@@ -77,7 +75,7 @@ static readonly extend: unique symbol
 
 Symbol key of the helper deriving an extended service instance.
 
-[Source](../../vendor/cordis/src/service.ts#L21)
+[Source](../../vendor/cordis/src/service.ts#L22)
 
 ### Service.tracker
 
@@ -88,7 +86,7 @@ static readonly tracker: unique symbol
 
 Symbol key of the tracker metadata used for context tracing.
 
-[Source](../../vendor/cordis/src/service.ts#L23)
+[Source](../../vendor/cordis/src/service.ts#L24)
 
 ### Service.resolveConfig
 
@@ -99,4 +97,4 @@ static readonly resolveConfig: unique symbol
 
 Symbol key of the intercept-config resolution helper below.
 
-[Source](../../vendor/cordis/src/service.ts#L25)
+[Source](../../vendor/cordis/src/service.ts#L26)

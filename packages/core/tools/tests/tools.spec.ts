@@ -9,7 +9,7 @@ import AgentLoop from '@deepseek-ai/dsh-agent-loop'
 import ApprovalService, { type ApprovalOutcome, type ApprovalRequest } from '@deepseek-ai/dsh-user-approval'
 import ToolRuntime, {
   defineContentToolFixture, defineTool, JsonSchemaError, parameterSchemaSpecToJsonSchema, validateArgs, ToolArgsError, ToolNotFoundError,
-  TOOL_ABORTED, TOOL_ABORTED_BEFORE_DISPATCH,
+  TOOL_ABORTED, TOOL_ABORTED_BEFORE_DISPATCH, TOOL_RUNTIME_SCHEDULER,
   type InferArgs, type ParameterSchemaSpec, type PreToolDecision, type PostToolDecision,
   type JsonSchemaNode, type ToolDefinition, type ToolDispatchExecution, type ToolExecutionResult, type ToolExecutionToken,
 } from '@deepseek-ai/dsh-tools'
@@ -38,6 +38,14 @@ const echoTool = defineTool({
 })
 
 describe('ToolRuntime', () => {
+  it('shares its scheduler entry point across separately loaded package copies', async () => {
+    const ctx = await setup()
+    const siblingPackageKey = Symbol.for('@deepseek-ai/dsh-tools.scheduler')
+
+    expect(TOOL_RUNTIME_SCHEDULER).toBe(siblingPackageKey)
+    expect(Reflect.get(ctx.tools, siblingPackageKey)).toBeDefined()
+  })
+
   it('registers tools, exposes schemas, and feeds the system-prompt assembly', async () => {
     const ctx = await setup()
     ctx.tools.register(echoTool)

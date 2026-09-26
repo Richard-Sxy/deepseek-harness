@@ -2,5 +2,5 @@
 # side as of the last confirmed-consistent state. Both languages carry equal authority;
 # after editing either side, bring the other along and re-record with:
 #   pnpm run verify-translation-pairing --write packages/integrations/dsh-integration-skillforge-multiclient/README.md
-README.md: 58c701e1b52a560cd06a54c319fbe7c79215e249
-README.zh.md: 1f53f3c1d8d0d46a9f898907e22b61809a21bf20
+README.md: b6ba5d6f0cb9e9b224cb422636d002e3a22e4461
+README.zh.md: 935fac08f7eece723ba8fbc2d04bbda705e56601

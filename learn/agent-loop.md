@@ -4,6 +4,17 @@
 
 `@deepseek-ai/dsh-agent-loop` 是 DeepSeek Harness 默认的 Agent 驱动器。它负责创建或恢复 Agent，把输入组织成 Turn 和 Step，调用 LLM、接收流式响应、执行工具，并把所有影响模型上下文的事实写入 Session 日志。
 
+profile 是一份可以启动的插件组合，位于 $DSH_HOME/profiles/<name>/ 他的 manifest 用 dsh.profile.bundles 声明由哪些 bundle 按什么顺序组成。
+bundle 是一个包，通过dsh.bundle.patch 指向一份 cordis.patch.yml 层。
+
+挂载：
+    启动器把各层 patch 按顺序叠起来，交给 Cordis Loader
+    Loader对每一行 -id/name/config 导入对应包、运行他的 apply 或服务类，注册的事件监听/服务就生效了。
+    如果 ~/.dsh/profile/<name> 为空，有一段代码会自动发现
+
+
+agent-loop是对话主干，不是可选扩展
+
 可以把它理解为整个 Agent 运行过程的调度器：
 
 ```text

@@ -238,12 +238,13 @@ export class ReactLoopAgent implements Agent {
     }
   }
 
+  // 每次模型前置步
   private async preStep(target: InboxTarget, position: { turn: number; step: number }): Promise<PreparedStep> {
     /* v8 ignore next -- private callers establish the running phase before proposing a step */
     if (this.phase.kind !== 'running') throw new Error(`agent "${this.id}": pre-step outside running phase`)
     const signal = this.phase.abort.signal
     const claimed = this.inbox.claim(target, position.turn)
-    const assembly = await this.loopCtx.systemPrompt.assemble(assembleContextFor(this, signal))
+    const assembly = await this.loopCtx.systemPrompt.assemble(assembleContextFor(this, signal))  // 触发组装
     signal.throwIfAborted()
     const sections = renderContextSections(assembly)
     const context = this.runtimeContext.project(joinContextSections(sections), sections)

@@ -114,5 +114,5 @@ export function missingRequiredParameters(
   parameters: Record<string, unknown>,
   required: readonly string[],
 ): string[] {
-  return required.filter((key) => !(key in parameters) || parameters[key] === '')
+  return required.filter(key => !(key in parameters) || parameters[key] === '')
 }

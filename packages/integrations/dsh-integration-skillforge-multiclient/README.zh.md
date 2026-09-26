@@ -16,10 +16,10 @@ kind: "package-reference"
 - [使用这个包](#use-this-package)
 - [客户端身份与隔离](#client-identity-and-isolation)
 - [理解实现](#understand-the-implementation)
-- [模型体验](#model-experience)
-- [已知限制与延期工作](#known-limitations-and-deferred-work)
 - [进一步探索](#further-exploration)
 - [开发备注](#dev-note)
+- [模型体验](#model-experience)
+- [已知限制与延期工作](#known-limitations-and-deferred-work)
 
 -----
 
@@ -118,11 +118,17 @@ sed -n '1,260p' "${DSH_HOME:-$HOME/.dsh}/storages/skillforge_multiclient.json"
 可信网关或组合适配器使用品牌化身份调用服务 API：
 
 ```ts
+import type { Context } from '@deepseek-ai/cordis'
 import { SessionId } from '@deepseek-ai/dsh-session'
 import {
   EvolutionClientId,
   EvolutionScopeId,
 } from '@deepseek-ai/dsh-integration-skillforge-multiclient'
+
+declare const ctx: Context
+declare const sessionId: string
+declare const authenticatedClientId: string
+declare const tenantOrTeamId: string
 
 await ctx.skillforgeMulticlient.bindSession(SessionId(sessionId), {
   clientId: EvolutionClientId(authenticatedClientId),
@@ -159,46 +165,6 @@ await ctx.skillforgeMulticlient.bindSession(SessionId(sessionId), {
 
 -----
 
-<a id="model-experience"></a>
-## 模型体验
-
-### 合格的跨客户端路径
-
-#### 模型看到什么
-
-当当前 Agent 存在绑定，并且至少一条路径在完全相同的域中符合条件时，系统提示词包含：
-
-```markdown
-Cross-client tool-call patterns verified in this evolution scope:
-- <toolA> -> <toolB> (clients=<count>, sessions=<count>, support=<count>).
-Use these de-parameterized paths only when they fit the current task; choose arguments from current context.
-```
-
-这里只包含工具名和聚合计数。客户端 id、Session id、域 id、参数、结果和历史任务文本都不会进入此段。
-
-#### Token 影响
-
-未绑定 Agent、空域以及没有 Agent 的诊断装配为零 token。其他情况下，此段包含一个标题、最多 `maxSkillsPerScope` 行路径摘要和一行指令结尾。
-
-#### KV Cache 影响
-
-此段位于基础 SkillForge 段之后，顺序为 `551`。合格状态、排序或计数变化会修改文本，并使从此段开始的缓存复用失效；域状态相同时重复装配会产生稳定文本。
-
------
-
-<a id="known-limitations-and-deferred-work"></a>
-## 已知限制与延期工作
-
-- **单进程和单个存储领域写入方**——操作队列协调同一个 DSH 进程内的并发 Session。它不是分布式锁，JSON 后端不能由多个写入方共享。
-- **回退身份就是 Session 身份**——默认值便于 headless 评测，但不能证明观察来自不同的人、设备或账户。生产法定人数应使用显式认证绑定。
-- **没有已发布的 Web 身份适配器**——服务 API 已可供网关适配器使用，但当前 Web 客户端不会向本包提供经过认证的客户端或租户 id。在挂载这样的适配器之前，Web Session 使用配置的回退策略或被排除。
-- **没有内置仪表盘**——持久 JSON 和 `snapshot(scopeId)` 暴露运维状态，但本包不增加客户端 UI。未来 UI 必须消费经过域授权的 Host 投影，而不是在浏览器中读取所有领域记录。
-- **仅线性路径**——证据表示连续工具名序列，不表示分支、参数、因果依赖、成功质量或通用 DAG。
-- **没有跨主机联邦**——多个 worker 需要外部协调器，或具有明确多写入方事务、幂等证据摄取和租户感知授权的存储后端；本包有意止于稳定的同进程阶段。
-- **模型可见快照夹具延期**——精确提示词输出由包行为测试固定。仓库录制 Session 用例仍需要一个确定性 profile 路径，能在回放前预置这个非 Session 存储领域。
-
------
-
 <a id="further-exploration"></a>
 ## 进一步探索
 
@@ -219,3 +185,42 @@ Use these de-parameterized paths only when they fit the current task; choose arg
 本包是第一阶段的同进程多客户端实现。保留基础 SkillForge 源码及其评测结果。把经过认证的 Web 或 API 适配器作为独立的 `bindSession` 提供方加入；只有在明确设计事务存储与授权后才加入跨进程协调。
 
 </details>
+
+-----
+
+<a id="model-experience"></a>
+## 模型体验
+
+### 合格的跨客户端路径
+
+#### 模型看到什么
+
+当当前 Agent 存在绑定，并且至少一条路径在完全相同的域中符合条件时，系统提示词包含下列段落。这里只包含工具名和聚合计数；客户端 id、Session id、域 id、参数、结果和历史任务文本都不会进入此段。
+
+##### 跨客户端路径段
+
+```markdown
+Cross-client tool-call patterns verified in this evolution scope:
+- <toolA> -> <toolB> (clients=<count>, sessions=<count>, support=<count>).
+Use these de-parameterized paths only when they fit the current task; choose arguments from current context.
+```
+
+#### Token 影响
+
+未绑定 Agent、空域以及没有 Agent 的诊断装配为零 token。其他情况下，此段包含一个标题、最多 `maxSkillsPerScope` 行路径摘要和一行指令结尾。
+
+#### KV Cache 影响
+
+此段位于基础 SkillForge 段之后，顺序为 `551`。合格状态、排序或计数变化会修改文本，并使从此段开始的缓存复用失效；域状态相同时重复装配会产生稳定文本。
+
+## 已知限制与延期工作
+
+<a id="known-limitations-and-deferred-work"></a>
+
+- **单进程和单个存储领域写入方**——操作队列协调同一个 DSH 进程内的并发 Session。它不是分布式锁，JSON 后端不能由多个写入方共享。
+- **回退身份就是 Session 身份**——默认值便于 headless 评测，但不能证明观察来自不同的人、设备或账户。生产法定人数应使用显式认证绑定。
+- **没有已发布的 Web 身份适配器**——服务 API 已可供网关适配器使用，但当前 Web 客户端不会向本包提供经过认证的客户端或租户 id。在挂载这样的适配器之前，Web Session 使用配置的回退策略或被排除。
+- **没有内置仪表盘**——持久 JSON 和 `snapshot(scopeId)` 暴露运维状态，但本包不增加客户端 UI。未来 UI 必须消费经过域授权的 Host 投影，而不是在浏览器中读取所有领域记录。
+- **仅线性路径**——证据表示连续工具名序列，不表示分支、参数、因果依赖、成功质量或通用 DAG。
+- **没有跨主机联邦**——多个 worker 需要外部协调器，或具有明确多写入方事务、幂等证据摄取和租户感知授权的存储后端；本包有意止于稳定的同进程阶段。
+- **模型可见快照夹具延期**——精确提示词输出由包行为测试固定。仓库录制 Session 用例仍需要一个确定性 profile 路径，能在回放前预置这个非 Session 存储领域。

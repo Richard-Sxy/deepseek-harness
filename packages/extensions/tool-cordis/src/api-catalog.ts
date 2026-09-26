@@ -2392,6 +2392,31 @@ export const SERVICE_API: readonly ServiceApiEntry[] = [
     ],
   },
   {
+    key: 'skillforgeMulticlient',
+    summary: 'Multi-client coordinator service.',
+    description: 'Multi-client coordinator service.',
+    methods: [
+      {
+        signature: 'bindSession(sessionId: SessionId, binding: ClientBinding): Promise<void>',
+        description: 'Bind one Session to a trusted client and evolution scope. A conflicting explicit binding is rejected. A fallback binding may be replaced only before the Session contributes evidence.',
+        parameters: [{ name: 'sessionId', description: 'Session identity to bind.' }, { name: 'binding', description: 'Trusted client and isolation identities.' }],
+        returns: 'resolution after the binding is durable.',
+      },
+      {
+        signature: 'bindingOf(sessionId: SessionId): ClientBindingRecord | undefined',
+        description: 'Read the durable binding of one Session.',
+        parameters: [{ name: 'sessionId', description: 'Session identity to inspect.' }],
+        returns: 'a detached record or `undefined` when the Session is excluded.',
+      },
+      {
+        signature: 'snapshot(scopeId: EvolutionScopeId): EvolutionScopeSnapshot',
+        description: 'Summarize durable evidence and qualified skills for one isolated scope.',
+        parameters: [{ name: 'scopeId', description: 'Evolution scope to inspect.' }],
+        returns: 'a detached operational snapshot.',
+      },
+    ],
+  },
+  {
     key: 'skills',
     summary: 'Layered registry of skill providers, the host+per-scope shape the tools registry established.',
     description: 'Layered registry of skill providers, the host+per-scope shape the tools registry established. A registration files into the layer of its calling context\'s scope (scopeOf): host rows and repository plugins land in the global layer, while a plugin mounted by an agent preset\'s standing composition lands in that preset\'s layer. A read merges the global layer with the viewing scope\'s chain — the nearest layer\'s entry wins a duplicate name outright, and the rank order decides duplicates only within one layer. It exposes sorted invocation-neutral summaries and loads full skill bodies on demand.',
@@ -4253,6 +4278,14 @@ export const TYPE_API: readonly TypeApiEntry[] = [
     declaration: 'export interface ClientArtifactBaseline {\n    readonly path: string;\n    readonly mtimeMs: number;\n    readonly size: number;\n}',
   },
   {
+    name: 'ClientBinding',
+    declaration: 'export interface ClientBinding {\n    readonly clientId: EvolutionClientId;\n    readonly scopeId: EvolutionScopeId;\n}',
+  },
+  {
+    name: 'ClientBindingRecord',
+    declaration: 'export type ClientBindingRecord = z.infer<typeof clientBindingRecord>;',
+  },
+  {
     name: 'CollectedOutput',
     declaration: 'export interface CollectedOutput {\n    text: string;\n    truncated: boolean;\n    spillPath?: string;\n}',
   },
@@ -4663,6 +4696,18 @@ export const TYPE_API: readonly TypeApiEntry[] = [
   {
     name: 'EpochHeader',
     declaration: 'export interface EpochHeader {\n    config: LlmCallConfig;\n    adapterDefaults?: LlmCallConfigAdapterDefaults;\n    tools?: ToolSchema[];\n}',
+  },
+  {
+    name: 'EvolutionClientId',
+    declaration: 'export type EvolutionClientId = Branded<\'SkillForgeEvolutionClientId\'>;',
+  },
+  {
+    name: 'EvolutionScopeId',
+    declaration: 'export type EvolutionScopeId = Branded<\'SkillForgeEvolutionScopeId\'>;',
+  },
+  {
+    name: 'EvolutionScopeSnapshot',
+    declaration: 'export interface EvolutionScopeSnapshot {\n    readonly scopeId: EvolutionScopeId;\n    readonly evidenceCount: number;\n    readonly clientCount: number;\n    readonly sessionCount: number;\n    readonly skills: readonly SharedSkillRecord[];\n}',
   },
   {
     name: 'FeedbackCategory',
@@ -6211,6 +6256,10 @@ export const TYPE_API: readonly TypeApiEntry[] = [
   {
     name: 'SettingsUpdateSource',
     declaration: 'export type SettingsUpdateSource = \'update\' | \'provider\';',
+  },
+  {
+    name: 'SharedSkillRecord',
+    declaration: 'export type SharedSkillRecord = z.infer<typeof sharedSkillRecord>;',
   },
   {
     name: 'ShellExecRequest',

@@ -95,6 +95,7 @@ declare module '@deepseek-ai/cordis' {
  * A backend implements full-text observation, reconciliation, ranking, cursor
  * generations, and query execution on the same `ctx.sessionQuery` service.
  */
+/** 查询引擎 */
 export abstract class SessionQueryEngine extends Service {
   static inject = ['sessions']
 

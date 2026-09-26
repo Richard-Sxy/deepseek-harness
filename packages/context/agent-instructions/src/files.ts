@@ -269,6 +269,7 @@ async function allExistingInstructionFiles(
   return found
 }
 
+/** 去发现指令文件 */
 async function discoverInstructionFiles(
   options: DiscoverOptions,
   fileSystem?: FileSystem,
@@ -281,8 +282,9 @@ async function discoverInstructionFiles(
     seen.add(file.absolutePath)
     files.push(file)
   }
-
+  // 拼出用户全局文件路径
   const userGlobal = join(config.dshHome, USER_GLOBAL_FILE)
+  // 探索文件状态 返回 StatFileProbe 'present'存在 'absent'不存在 'unavailable'无法访问(权限IO)
   const userGlobalProbe = await statFile(userGlobal, fileSystem, options.signal)
   switch (userGlobalProbe.kind) {
     case 'present':
@@ -299,7 +301,7 @@ async function discoverInstructionFiles(
     default:
       assertNever(userGlobalProbe, 'StatFileProbe')
   }
-
+  // cwd 表示当前工作目录
   const cwd = resolve(options.cwd)
   const projectRoot = options.projectRoot
     ?? await findProjectRoot(cwd, config.projectRootMarkers, fileSystem, options.signal)

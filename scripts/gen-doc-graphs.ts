@@ -511,6 +511,14 @@ const SERVICE_ROLES: ServiceRole[] = [
     note: 'Merges provider skill catalogs; tool-skill renders the session-prefix catalog and loads complete skill bodies.',
   },
   {
+    key: 'skillforgeMulticlient',
+    pkg: 'integration-skillforge-multiclient',
+    title: 'SkillForge multi-client evidence coordinator',
+    mode: 'core',
+    companions: ['integration-skillforge'],
+    note: 'Binds Sessions to trusted client and evolution-scope identities, persists successful tool paths, promotes only cross-client evidence, and injects qualified paths into the matching scope.',
+  },
+  {
     key: 'agents',
     pkg: 'agent',
     title: 'Agent service',

@@ -16,10 +16,10 @@ Use this companion plugin when several clients or Sessions should contribute suc
 - [Use this package](#use-this-package)
 - [Client identity and isolation](#client-identity-and-isolation)
 - [Understand the implementation](#understand-the-implementation)
-- [Model Experience](#model-experience)
-- [Known Limitations and Deferred Work](#known-limitations-and-deferred-work)
 - [Further Exploration](#further-exploration)
 - [Dev Note](#dev-note)
+- [Model Experience](#model-experience)
+- [Known Limitations and Deferred Work](#known-limitations-and-deferred-work)
 
 -----
 
@@ -118,11 +118,17 @@ Evidence keys are stable per Session, turn, window start, and window length, so 
 A trusted gateway or composition adapter calls the service API with branded identities:
 
 ```ts
+import type { Context } from '@deepseek-ai/cordis'
 import { SessionId } from '@deepseek-ai/dsh-session'
 import {
   EvolutionClientId,
   EvolutionScopeId,
 } from '@deepseek-ai/dsh-integration-skillforge-multiclient'
+
+declare const ctx: Context
+declare const sessionId: string
+declare const authenticatedClientId: string
+declare const tenantOrTeamId: string
 
 await ctx.skillforgeMulticlient.bindSession(SessionId(sessionId), {
   clientId: EvolutionClientId(authenticatedClientId),
@@ -159,46 +165,6 @@ Promotion groups evidence by exact tool-name sequence inside one scope, then che
 
 -----
 
-<a id="model-experience"></a>
-## Model Experience
-
-### Qualified cross-client paths
-
-#### What the model sees
-
-When the current Agent has a binding and at least one path qualifies in that exact scope, the system prompt contains:
-
-```markdown
-Cross-client tool-call patterns verified in this evolution scope:
-- <toolA> -> <toolB> (clients=<count>, sessions=<count>, support=<count>).
-Use these de-parameterized paths only when they fit the current task; choose arguments from current context.
-```
-
-Only tool names and aggregate counts are included. Client ids, Session ids, scope ids, arguments, results, and historical task text never enter this section.
-
-#### Token effect
-
-Zero tokens for unbound Agents, empty scopes, and diagnostic assemblies without an Agent. Otherwise the section contains one header, up to `maxSkillsPerScope` one-line path summaries, and one instruction footer.
-
-#### KV Cache effect
-
-This section is placed immediately after the base SkillForge section at order `551`. Its text changes when qualification, ranking, or counts change, invalidating cache reuse from this segment onward; repeated assembly with the same scope state produces stable text.
-
------
-
-<a id="known-limitations-and-deferred-work"></a>
-## Known Limitations and Deferred Work
-
-- **Single process and one storage-domain writer** — the operation queue coordinates concurrent Sessions inside one DSH process. It is not a distributed lock, and the JSON backend must not be shared by multiple writers.
-- **Fallback identity is Session identity** — the default is convenient for headless evaluation but does not prove that observations came from independent people, devices, or accounts. Use explicit authenticated bindings for production quorum.
-- **No shipped Web identity adapter** — the service API is ready for a gateway adapter, but the current Web client does not supply an authenticated client or tenant id to this package. Until such an adapter is mounted, Web Sessions use the configured fallback or are excluded.
-- **No built-in dashboard** — persistence JSON and `snapshot(scopeId)` expose operational state, but this package does not add client UI. A future UI must consume a scope-authorized Host projection rather than reading all domain records in the browser.
-- **Linear paths only** — evidence represents contiguous tool-name sequences, not branches, arguments, causal dependencies, success quality, or general DAGs.
-- **No cross-host federation** — multiple workers require an external coordinator or a storage backend with explicit multi-writer transactions, idempotent evidence ingestion, and tenant-aware authorization; this package intentionally stops at the stable same-process phase.
-- **Model-visible snapshot fixture deferred** — the exact prompt output is pinned by the package behavior test. A repository recorded-session case still requires a deterministic profile route that can preseed this non-Session storage domain before replay.
-
------
-
 <a id="further-exploration"></a>
 ## Further Exploration
 
@@ -219,3 +185,42 @@ This section is placed immediately after the base SkillForge section at order `5
 This package is the first same-process multi-client phase. Preserve the base SkillForge source and its evaluation result. Add an authenticated Web or API adapter as a separate provider of `bindSession`; add cross-process coordination only with an explicit transactional storage and authorization design.
 
 </details>
+
+-----
+
+<a id="model-experience"></a>
+## Model Experience
+
+### Qualified cross-client paths
+
+#### What the model sees
+
+When the current Agent has a binding and at least one path qualifies in that exact scope, the system prompt contains the section below. It includes only tool names and aggregate counts; client ids, Session ids, scope ids, arguments, results, and historical task text never enter this section.
+
+##### Cross-client path section
+
+```markdown
+Cross-client tool-call patterns verified in this evolution scope:
+- <toolA> -> <toolB> (clients=<count>, sessions=<count>, support=<count>).
+Use these de-parameterized paths only when they fit the current task; choose arguments from current context.
+```
+
+#### Token effect
+
+Zero tokens for unbound Agents, empty scopes, and diagnostic assemblies without an Agent. Otherwise the section contains one header, up to `maxSkillsPerScope` one-line path summaries, and one instruction footer.
+
+#### KV Cache effect
+
+This section is placed immediately after the base SkillForge section at order `551`. Its text changes when qualification, ranking, or counts change, invalidating cache reuse from this segment onward; repeated assembly with the same scope state produces stable text.
+
+## Known Limitations and Deferred Work
+
+<a id="known-limitations-and-deferred-work"></a>
+
+- **Single process and one storage-domain writer** — the operation queue coordinates concurrent Sessions inside one DSH process. It is not a distributed lock, and the JSON backend must not be shared by multiple writers.
+- **Fallback identity is Session identity** — the default is convenient for headless evaluation but does not prove that observations came from independent people, devices, or accounts. Use explicit authenticated bindings for production quorum.
+- **No shipped Web identity adapter** — the service API is ready for a gateway adapter, but the current Web client does not supply an authenticated client or tenant id to this package. Until such an adapter is mounted, Web Sessions use the configured fallback or are excluded.
+- **No built-in dashboard** — persistence JSON and `snapshot(scopeId)` expose operational state, but this package does not add client UI. A future UI must consume a scope-authorized Host projection rather than reading all domain records in the browser.
+- **Linear paths only** — evidence represents contiguous tool-name sequences, not branches, arguments, causal dependencies, success quality, or general DAGs.
+- **No cross-host federation** — multiple workers require an external coordinator or a storage backend with explicit multi-writer transactions, idempotent evidence ingestion, and tenant-aware authorization; this package intentionally stops at the stable same-process phase.
+- **Model-visible snapshot fixture deferred** — the exact prompt output is pinned by the package behavior test. A repository recorded-session case still requires a deterministic profile route that can preseed this non-Session storage domain before replay.

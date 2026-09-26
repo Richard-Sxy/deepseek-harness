@@ -278,6 +278,7 @@ export interface Config {
  * @returns the rendered prompt, or `''` when all sections are empty.
  */
 export function renderPrompt(assembly: PromptAssembly): string {
+  // 这边最终装配成 系统提示词
   return assembly.sections
     .map(section => section.interpolate === false ? section.text : interpolate(section, assembly.variables, 'section'))
     .filter(text => text.length > 0)

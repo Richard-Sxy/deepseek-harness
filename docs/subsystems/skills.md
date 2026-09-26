@@ -263,6 +263,42 @@ Host service backing `ctx.remote.skills` without activating a cold Agent.
 
 Source: [`packages/api/session-controller/src/skill-catalog.ts`](../../packages/api/session-controller/src/skill-catalog.ts)
 
+<a id="ctxskillforgemulticlient--skillforgemulticlientservice"></a>
+
+### `ctx.skillforgeMulticlient` — `SkillForgeMulticlientService`
+
+Multi-client coordinator service.
+
+```ts cordis-catalog
+/**
+ * Bind one Session to a trusted client and evolution scope. A conflicting
+ * explicit binding is rejected. A fallback binding may be replaced only
+ * before the Session contributes evidence.
+ * @param sessionId - Session identity to bind.
+ * @param binding - Trusted client and isolation identities.
+ * @returns resolution after the binding is durable.
+ */
+bindSession(sessionId: SessionId, binding: ClientBinding): Promise<void>
+
+/**
+ * Read the durable binding of one Session.
+ * @param sessionId - Session identity to inspect.
+ * @returns a detached record or `undefined` when the Session is excluded.
+ */
+bindingOf(sessionId: SessionId): ClientBindingRecord | undefined
+
+/**
+ * Summarize durable evidence and qualified skills for one isolated scope.
+ * @param scopeId - Evolution scope to inspect.
+ * @returns a detached operational snapshot.
+ */
+snapshot(scopeId: EvolutionScopeId): EvolutionScopeSnapshot
+```
+
+Types: [SessionId](core.md)
+
+Source: [`packages/integrations/dsh-integration-skillforge-multiclient/src/index.ts`](../../packages/integrations/dsh-integration-skillforge-multiclient/src/index.ts)
+
 <a id="ctxskills--skillregistry"></a>
 
 ### `ctx.skills` — `SkillRegistry`

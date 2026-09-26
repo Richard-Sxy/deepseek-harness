@@ -40,11 +40,12 @@ export interface ToolParameterTemplate {
 /** Linear-interpolated quantile over an ascending array. */
 function quantile(sorted: number[], q: number): number {
   if (sorted.length === 0) return 0
-  if (sorted.length === 1) return sorted[0]!
+  if (sorted.length === 1) return sorted[0] ?? 0
   const pos = (sorted.length - 1) * q
   const base = Math.floor(pos)
   const rest = pos - base
-  const lower = sorted[base]!
+  const lower = sorted[base]
+  if(lower == undefined){ throw new Error(`No value of ${base}`) }
   const upper = sorted[base + 1] ?? lower
   return lower + rest * (upper - lower)
 }
@@ -66,8 +67,10 @@ function restoreInt(value: number, examples: number[]): number {
  */
 function kdeMode(values: number[]): number {
   const sorted = [...values].sort((a, b) => a - b)
-  const lower = sorted[0]!
-  const upper = sorted[sorted.length - 1]!
+  const lower = sorted[0]
+  if(lower == undefined){ throw new Error('No Value of Kde_lower') }
+  const upper = sorted[sorted.length - 1]
+  if(upper == undefined){ throw new Error('No Value of kdeMode_upper') }
   const bandwidth = Math.max((upper - lower) / 10, 1e-3)
   let best = quantile(sorted, 0.5)
   let bestDensity = -Infinity
@@ -94,8 +97,10 @@ function numericConstraint(
   quantileClip: number,
 ): ParameterConstraint {
   const sorted = [...values].sort((a, b) => a - b)
-  const hardLower = sorted[0]!
-  const hardUpper = sorted[sorted.length - 1]!
+  const hardLower = sorted[0]
+  if(hardLower == undefined){ throw new Error('No Value of numericConstraint_hardLower') }
+  const hardUpper = sorted[sorted.length - 1]
+  if(hardUpper == undefined){ throw new Error('No Value of numericConstraint_hardUpper') }
   // KDE mode from 3+ samples (port parity with the Python sklearn path);
   // median below that. On multi-modal histories the mode stays inside a
   // validated cluster where the median can land on a never-used value.
@@ -135,7 +140,8 @@ function categoricalConstraint(
     if (entry) entry.count += 1
     else counts.set(text, { count: 1, example: value })
   }
-  const top = [...counts.entries()].sort((a, b) => b[1].count - a[1].count)[0]!
+  const top = [...counts.entries()].sort((a, b) => b[1].count - a[1].count)[0]
+  if(top == undefined){ throw new Error('No value of categoricalConstraint_top') }
   const allowedValues = [...counts.entries()]
     .sort(([a], [b]) => a.localeCompare(b))
     .map(([, entry]) => entry.example)
@@ -171,6 +177,7 @@ function shapeConstraint(
   }
 }
 
+/** 构建约束 */
 function buildConstraint(
   key: string,
   values: unknown[],
@@ -179,6 +186,7 @@ function buildConstraint(
 ): ParameterConstraint {
   const numericValues = values.filter(isNumber)
   const booleanValues = values.filter(isBoolean)
+  // 这边去调用 KDE 构建
   if (numericValues.length > 0 && numericValues.length >= values.length * 0.8) {
     return numericConstraint(key, numericValues, required, quantileClip)
   }
@@ -215,6 +223,10 @@ export function buildTemplate(
   scenario: string,
   quantileClip = 0.05,
 ): ToolParameterTemplate {
+  // 根据同一个工具的多次调用，统计没过参数的类型、常用值、数值范围和是否必填，生成一个参数模版
+  // 过滤失败调用/
+  // 按照参数名收集所有出现过的数值/
+  // 统计参数出现过的次数/
   const successful = calls.filter(call => call.success)
   const valuesByKey = new Map<string, unknown[]>()
   const presenceByKey = new Map<string, number>()
@@ -226,7 +238,7 @@ export function buildTemplate(
       presenceByKey.set(key, (presenceByKey.get(key) ?? 0) + 1)
     }
   }
-
+  // 为每个参数构建约束
   const constraints: Record<string, ParameterConstraint> = {}
   const defaults: Record<string, unknown> = {}
   const requiredKeys: string[] = []
@@ -237,7 +249,7 @@ export function buildTemplate(
     defaults[key] = constraint.default
     if (constraint.required) requiredKeys.push(key)
   }
-
+  // 这边构建返回值，工具名字，场景，约束，默认值，需要的Key，样本长度
   return {
     toolName: toolName || (successful[0]?.toolName ?? 'unknown'),
     scenario,

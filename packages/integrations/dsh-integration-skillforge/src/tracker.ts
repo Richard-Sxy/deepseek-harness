@@ -25,13 +25,18 @@ interface TurnAccumulator {
   completedCalls: TurnCall[]
 }
 
-// 会话轨迹
+// Session轨迹主要处理这五种：'turn/start' 'user/message' 'assistant/message' 'tool/call' 'tool/result'
+// 但是事件分为 基础事件 主要包含 turn user assistant tool 等交互等基础事件
+// 插件拓展事件 compaction approval sandbox subagent 等基础事件
+// 这边主要就是为了生成 { goal, plannerTrace, calls }
+// 如果这边深入研究开源添加 approval/asked/decided 统计权限墙次数(模型尝试执行操作，但是沙箱活权限策略无法继续)
 class SessionTracker {
-  readonly sessionId: string  // 初始化后不能重新赋值
-  readonly cwd: string | undefined
-  readonly agentPreset: string | undefined
+  readonly sessionId: string  // session_id 这个是唯一的
+  readonly cwd: string | undefined  // 当前绝对路径
+  readonly agentPreset: string | undefined  // agent预设 提前搭好的配置
   private currentTurn = 0
-  private turns = new Map<number, TurnAccumulator>()
+  private turns = new Map<number, TurnAccumulator>()  // 用户输入 每一轮的响应收集器
+  // 这边本质上是存储事件
 
   constructor(sessionId: string, cwd: string | undefined, agentPreset: string | undefined) {
     this.sessionId = sessionId
@@ -122,13 +127,17 @@ class SessionTracker {
   }
 
   /** Consume a completed turn. Returns null when the turn has no tool calls. */
+  /** 这边生成最终轨迹 */
   finalizeTurn(turn: number): TurnRecord | null {
     const acc = this.turns.get(turn)
+    // 这边完成的工具调用为空
     if (!acc || acc.completedCalls.length === 0) {
       this.turns.delete(turn)
       return null
     }
+    // 删除这一轮
     this.turns.delete(turn)
+    // 这边虽然删除了，但是返回了一个 TurnRecord 记录
     return {
       sessionId: this.sessionId,
       turn,
@@ -137,7 +146,8 @@ class SessionTracker {
       calls: acc.completedCalls,
     }
   }
-  
+  // 这边确立返回的对象就是我们 SessionTracker 轨迹化的结果
+  // { turn, goal, plannerTrace, pendingCalls, completedCalls }
   private ensureTurn(turn: number): TurnAccumulator {
     let acc = this.turns.get(turn)
     if (!acc) {
@@ -157,7 +167,7 @@ class SessionTracker {
 /** Map of session-id → tracker, bounded so abandoned sessions cannot grow unbounded. */
 const MAX_TRACKED_SESSIONS = 64
 const sessions = new Map<string, SessionTracker>()
-
+// 通过 session.id 获取 SessionTracker
 export function trackerFor(session: Session): SessionTracker {
   const id = String(session.header.id)
   let tracker = sessions.get(id)

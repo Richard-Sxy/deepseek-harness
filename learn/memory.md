@@ -2,7 +2,10 @@
 
 ## 摘要
 
-DeepSeek Harness 没有一个统一的“记忆管理器”。模型每次请求时能看到的内容，由 Session 事件日志、当前 System Prompt、工具定义和本轮注入内容共同组成。Session JSONL、附件存储和 Storage Domain 分别持久化不同类型的数据，Checkpoint Policy 决定关键操作前何时必须完成落盘。长期运行时，Compaction 把较早的对话压缩成摘要；跨 Session 内容必须通过 Session Query、Session Reference、Skill、AGENTS.md 或业务插件显式取回。当前项目还启用了 SkillForge，它会把多次 Session 中成功的工具调用链提炼成可再次注入的经验。
+DeepSeek Harness 没有一个统一的“记忆管理器”。模型每次请求时能看到的内容，由 Session 事件日志、当前 **System Prompt、工具定义和本轮注入内容**共同组成。
+Session JSONL、附件存储和 Storage Domain 分别持久化不同类型的数据，Checkpoint Policy 决定关键操作前何时必须完成落盘。长期运行时，Compaction 把较早的对话压缩成摘要；
+**跨 Session 内容**必须通过 Session Query、Session Reference、Skill、AGENTS.md 或业务插件显式取回。
+当前项目还启用了 **SkillForge**，它会把多次 Session 中成功的工具调用链提炼成可再次注入的经验。
 
 ## 目录
 
@@ -38,6 +41,7 @@ LLM 本身不会在两次 API 请求之间保存项目状态。每次调用模�
 | `AGENTS.md` | 文件本身是持久的 | 是，由指令插件加载 |
 | Skill 正文 | 文件或 Provider 持久化 | 默认只发目录摘要，使用时才加载正文 |
 | Storage Domain 中的业务数据 | 是 | 否，必须由插件读取并注入 |
+-----------------------------------------------------------
 | SkillForge 提炼出的工具链 | 是 | 达到门槛并处于可用状态后注入 |
 | 普通项目文件 | 是 | 否，必须通过工具读取或由插件注入 |
 
@@ -54,6 +58,8 @@ LLM 本身不会在两次 API 请求之间保存项目状态。每次调用模�
 ### 3. 跨 Session 检索记忆
 
 其他 Session 不会自动进入当前请求。模型可以通过**只读查询工具**检索旧 Session，宿主也可以通过 **Session Reference** 把指定 Session 的快照注入当前对话。
+session_search(搜索旧的Session)/session_event_search(在某个已授权的Session内搜索事件)/session_trace(父子谱系)/
+session_event_trace(读事件替换/引用关系)/session_event_read(读完整事件及相邻摘要)
 
 ### 4. 指令记忆
 
